@@ -4,7 +4,7 @@ import numpy as np
 import gradio as gr
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-repo_name = "juliensimon/autonlp-song-lyrics-18753417"
+repo_name = "colinnguyen555/song-lyrics"
 
 tokenizer = AutoTokenizer.from_pretrained(repo_name)
 model = AutoModelForSequenceClassification.from_pretrained(repo_name)
