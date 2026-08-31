@@ -1,4 +1,3 @@
-# mlops_cn_al
 ---
 title: Song Lyrics
 emoji: 🎵
