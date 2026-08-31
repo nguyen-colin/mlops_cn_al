@@ -11,7 +11,7 @@ models:
 datasets:
   - juliensimon/autonlp-data-song-lyrics
 ---
-# Song Lyrics Genre Classifier
+# Song Lyrics Genre Classifier Test
 
 Paste song lyrics and predict their musical genre using a fine-tuned transformer model. Returns the top 3 most likely genres with confidence scores.
 
