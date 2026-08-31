@@ -1,46 +1,3 @@
-Hugging Face's logo
-Hugging Face
-Models
-Datasets
-Spaces
-Buckets
-new
-Docs
-Pricing
-
-
-Hugging Face is way more fun with friends and colleagues! 🤗 Join an organization
-Spaces:
-juliensimon
-/
-song-lyrics
-
-
-like
-12
-App
-Files
-Community
-song-lyrics
-/
-app.py
-
-juliensimon's picture
-juliensimon
-Add description, examples, and Gradio 5 compat
-f59ff56
-verified
-5 months ago
-Raw
-
-Download with hf CLI
-
-Copy download link
-History
-Blame
-Contribute
-Delete
-2.56 kB
 import torch
 import numpy as np
 import gradio as gr
@@ -94,4 +51,3 @@ iface = gr.Interface(
     flagging_mode="never",
 )
 iface.launch()
-
