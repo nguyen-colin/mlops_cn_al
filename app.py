@@ -1,4 +1,5 @@
 import torch
+import spaces
 import numpy as np
 import gradio as gr
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -10,7 +11,7 @@ model = AutoModelForSequenceClassification.from_pretrained(repo_name)
 labels = model.config.id2label
 print(labels)
 
-
+@spaces.GPU
 def predict(lyrics):
     inputs = tokenizer(lyrics, padding=True, truncation=True, return_tensors="pt")
     outputs = model(**inputs)
