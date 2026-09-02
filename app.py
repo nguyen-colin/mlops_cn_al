@@ -12,9 +12,10 @@ labels = model.config.id2label
 print(labels)
 
 @spaces.GPU
-def predict(lyrics):
+def predict(lyrics, temperature):
     inputs = tokenizer(lyrics, padding=True, truncation=True, return_tensors="pt")
     outputs = model(**inputs)
+    scaled_logits = outputs.logits / temperature
     predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
     predictions = predictions.detach().numpy()[0]
     predictions = predictions * 100
