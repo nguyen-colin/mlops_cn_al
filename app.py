@@ -38,7 +38,11 @@ description = (
 
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Textbox(lines=10, label="Song lyrics", placeholder="Paste song lyrics here..."),
+    inputs=[
+        gr.Textbox(lines=10, label="Song lyrics", placeholder="Paste song lyrics here..."),
+        gr.Slider(minimum=0.1, maximum=5.0, value=1.0, step=0.1, label="Temperature",
+                   info="Lower = more confident/peaked, higher = more uniform/softer predictions"),
+    ],
     outputs=gr.Text(label="Genre prediction"),
     title="Song Lyrics Genre Classifier",
     description=description,
