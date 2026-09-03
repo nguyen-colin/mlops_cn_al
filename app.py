@@ -2,7 +2,7 @@ import torch
 import spaces
 import numpy as np
 import gradio as gr
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoProcessor, AutoModelForMultimodalLM
 
 repo_name = "juliensimon/autonlp-song-lyrics-18753417"
 tokenizer = AutoTokenizer.from_pretrained(repo_name)
