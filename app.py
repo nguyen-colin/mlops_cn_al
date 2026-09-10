@@ -32,9 +32,9 @@ def local_generate(prompt, temperature):
     )
     return outputs[0]["generated_text"][-1]["content"]
 
-def remote_generate(prompt, temperature, hf_token):
+def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
     client = InferenceClient(
-        token=hf_token.token,
+        token=hf_token.token if hf_token else None,
         model=REMOTE_MODEL,
     )
     messages = [
@@ -51,7 +51,7 @@ def remote_generate(prompt, temperature, hf_token):
     )
     return response.choices[0].message.content
 
-def predict(lyrics, temperature, use_local, hf_token):
+def predict(lyrics, temperature, use_local, hf_token: gr.OAuthToken | None):
     prompt = f"""
 Analyze the following song lyrics.
 
@@ -91,6 +91,7 @@ iface = gr.Interface(
         ["I got my mind on my money and my money on my mind\nRolling down the street smoking indo, sipping on gin and juice\nLaid back with my mind on my money and my money on my mind", 0.7, True],
         ["Achy breaky heart, don't tell my heart\nMy achy breaky heart, I just don't think he'd understand\nAnd if you tell my heart, my achy breaky heart\nHe might blow up and kill this man", 1.0, True],
     ],
+    cache_examples=False,
     flagging_mode="never",
 )
 
