@@ -34,7 +34,7 @@ def local_generate(prompt, temperature):
 
 def remote_generate(prompt, temperature, hf_token):
     client = InferenceClient(
-        token=hf_token,
+        token=hf_token.token,
         model=REMOTE_MODEL,
     )
     messages = [

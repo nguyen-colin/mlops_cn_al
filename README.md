@@ -6,10 +6,9 @@ colorTo: blue
 sdk: gradio
 app_file: app.py
 pinned: false
-models:
-  - juliensimon/autonlp-song-lyrics-18753417
-datasets:
-  - juliensimon/autonlp-data-song-lyrics
+hf_oauth: true
+hf_oauth_scope: 
+  - inference-api
 ---
 # Song Lyrics Genre Classifier Test
 
