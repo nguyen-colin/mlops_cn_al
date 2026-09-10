@@ -6,6 +6,7 @@ from functools import lru_cache
 
 LOCAL_MODEL = "google/gemma-4-E2B-it"
 REMOTE_MODEL = "openai/gpt-oss-20b"
+REMOTE_TIMEOUT_SECONDS = 30
 
 # Local model
 @lru_cache(maxsize=1)
@@ -38,6 +39,7 @@ def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
     client = InferenceClient(
         token=hf_token.token,
         model=REMOTE_MODEL,
+        timeout=REMOTE_TIMEOUT_SECONDS,
     )
     messages = [
         {
@@ -53,7 +55,24 @@ def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
     )
     return response.choices[0].message.content
 
+def failure_reason(error):
+    """Describe failures without exposing API responses or credentials."""
+    status = getattr(getattr(error, "response", None), "status_code", None)
+    if isinstance(error, TimeoutError) or "timeout" in type(error).__name__.lower():
+        return "request timed out"
+    if status == 429:
+        return "rate limit reached"
+    if status in (401, 403):
+        return "authentication or access denied"
+    if status is not None and status >= 500:
+        return "service unavailable"
+    return "inference failed"
+
+
 def predict(lyrics, temperature, use_local, hf_token: gr.OAuthToken | None):
+    if not lyrics or not lyrics.strip():
+        return "Please enter song lyrics."
+
     prompt = f"""
 Analyze the following song lyrics.
 
@@ -68,14 +87,34 @@ Lyrics:
 {lyrics}
 """
 
-    if use_local:
-        return local_generate(prompt, temperature)
+    # Each request tries the preferred model first, allowing automatic recovery.
+    order = ("local", "remote") if use_local else ("remote", "local")
+    failures = []
+    for backend in order:
+        if backend == "remote" and not getattr(hf_token, "token", None):
+            failures.append("Remote model unavailable: Hugging Face login required")
+            continue
 
-    # User must log in for remote inference
-    if hf_token is None or not getattr(hf_token, "token", None):
-        return "Please log in with Hugging Face to use the remote model."
+        try:
+            if backend == "local":
+                result = local_generate(prompt, temperature)
+                model = LOCAL_MODEL
+            else:
+                result = remote_generate(prompt, temperature, hf_token)
+                model = REMOTE_MODEL
+            if not isinstance(result, str) or not result.strip():
+                raise ValueError("Empty model response")
+        except Exception as error:
+            # catch only around inference, and attempt each backend at most once.
+            failures.append(f"{backend.capitalize()} model: {failure_reason(error)}")
+            continue
 
-    return remote_generate(prompt, temperature, hf_token)
+        status = f"Handled by {backend} model: {model}"
+        if failures:
+            status += "\nAutomatic fallback: " + "; ".join(failures) + "."
+        return f"{status}\n\n{result}"
+
+    return "Unable to generate a prediction. " + "; ".join(failures) + ". Please try again."
 
 
 if __name__ == "__main__":
@@ -84,7 +123,7 @@ if __name__ == "__main__":
         inputs=[
             gr.Textbox(lines=10, label="Song lyrics", placeholder="Paste song lyrics here..."),
             gr.Slider(minimum=0.1, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
-            gr.Checkbox(label="Use Local Model", value=False),
+            gr.Checkbox(label="Prefer local model (automatic fallback enabled)", value=False),
         ],
         outputs=gr.Text(label="Genre prediction"),
         title="Song Lyrics Genre Classifier",
