@@ -69,6 +69,10 @@ Lyrics:
     if use_local:
         return local_generate(prompt, temperature)
 
+    # User must log in for remote inference
+    if hf_token is None or not getattr(hf_token, "token", None):
+        return "Please log in with Hugging Face to use the remote model."
+
     return remote_generate(prompt, temperature, hf_token)
 
 
@@ -89,4 +93,9 @@ iface = gr.Interface(
     ],
     flagging_mode="never",
 )
-iface.launch()
+
+with gr.Blocks() as demo:
+    gr.LoginButton()
+    iface.render()
+
+demo.launch()
