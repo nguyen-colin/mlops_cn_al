@@ -34,7 +34,7 @@ def local_generate(prompt, temperature):
 
 def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
     client = InferenceClient(
-        token=hf_token.token if hf_token else None,
+        token=hf_token.token,
         model=REMOTE_MODEL,
     )
     messages = [
@@ -45,7 +45,7 @@ def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
     ]
     response = client.chat_completion(
         messages,
-        max_tokens=200,
+        max_tokens=512,
         temperature=temperature,
         top_p=0.95,
     )
