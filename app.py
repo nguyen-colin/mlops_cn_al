@@ -2,18 +2,20 @@ import spaces
 import gradio as gr
 from transformers import pipeline
 from huggingface_hub import InferenceClient
-
+from functools import lru_cache
 
 LOCAL_MODEL = "google/gemma-4-E2B-it"
 REMOTE_MODEL = "openai/gpt-oss-20b"
 
 # Local model
-pipe = pipeline(
-    "text-generation",
-    model=LOCAL_MODEL,
-    dtype="auto",
-    device="cuda",
-)
+@lru_cache(maxsize=1)
+def get_pipe():
+    return pipeline(
+        "text-generation",
+        model=LOCAL_MODEL,
+        dtype="auto",
+        device="cuda",
+    )
 
 @spaces.GPU
 def local_generate(prompt, temperature):
@@ -23,7 +25,7 @@ def local_generate(prompt, temperature):
             "content": prompt,
         }
     ]
-    outputs = pipe(
+    outputs = get_pipe()(
         messages,
         max_new_tokens=200,
         do_sample=True,
