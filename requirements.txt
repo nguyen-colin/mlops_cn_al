@@ -2,3 +2,6 @@ torch
 torchvision
 transformers
 accelerate
+gradio[oauth]
+spaces
+huggingface_hub
