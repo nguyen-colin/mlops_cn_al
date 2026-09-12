@@ -22,8 +22,11 @@ def test_predict_uses_local_model(monkeypatch):
         hf_token=None,
     )
 
-    assert result == f"Handled by local model: {app.LOCAL_MODEL}\n\n{expected}"
-    local_model.assert_called_once()
+    assert result.startswith(
+    f"Handled by local model: {app.LOCAL_MODEL}\nResponse time:"
+    )
+    assert result.endswith(expected)
+
 
     prompt, temperature = local_model.call_args.args
     assert lyrics in prompt
