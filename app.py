@@ -21,7 +21,6 @@ def get_pipe():
 
 @spaces.GPU
 def local_generate(prompt, temperature):
-    start  = time.perf_counter()
     messages = [
         {
             "role": "user",
@@ -36,12 +35,9 @@ def local_generate(prompt, temperature):
         top_p=0.95,
     )
 
-    elapsed = time.perf_counter() - start 
-    result = outputs[0]["generated_text"][-1]["content"]
-    return result, elapsed
+    return = outputs[0]["generated_text"][-1]["content"]
 
 def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
-    start = time.perf_counter()
     
     client = InferenceClient(
         token=hf_token.token,
@@ -61,8 +57,7 @@ def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
         top_p=0.95,
     )
     
-    elapsed = time.perf_counter() - start
-    return response.choices[0].message.content, elapsed
+    return response.choices[0].message.content
 
 def failure_reason(error):
     """Describe failures without exposing API responses or credentials."""
@@ -105,12 +100,17 @@ Lyrics:
             continue
 
         try:
+            start = time.perf_counter()
+            
             if backend == "local":
-                result, elapsed = local_generate(prompt, temperature)
+                result = local_generate(prompt, temperature)
                 model = LOCAL_MODEL
             else:
-                result, elapsed = remote_generate(prompt, temperature, hf_token)
+                result = remote_generate(prompt, temperature, hf_token)
                 model = REMOTE_MODEL
+
+            elapsed = time.perf_counter() - start
+            
             if not isinstance(result, str) or not result.strip():
                 raise ValueError("Empty model response")
         except Exception as error:
