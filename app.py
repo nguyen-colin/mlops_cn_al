@@ -92,7 +92,7 @@ Lyrics:
 """
 
     # Each request tries the preferred model first, allowing automatic recovery.
-    order = ("local", "remote") if use_local else ("remote",)
+    order = ("local", "remote") if use_local else ("remote", "local")
     failures = []
     for backend in order:
         if backend == "remote" and not getattr(hf_token, "token", None):
