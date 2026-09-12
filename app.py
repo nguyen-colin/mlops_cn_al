@@ -29,7 +29,7 @@ def local_generate(prompt, temperature):
     ]
     outputs = get_pipe()(
         messages,
-        max_new_tokens=512,
+        max_new_tokens=200,
         do_sample=True,
         temperature=temperature,
         top_p=0.95,
@@ -114,6 +114,7 @@ Lyrics:
             if not isinstance(result, str) or not result.strip():
                 raise ValueError("Empty model response")
         except Exception as error:
+            print(f"{backend} error:", repr(error))
             # catch only around inference, and attempt each backend at most once.
             failures.append(f"{backend.capitalize()} model: {failure_reason(error)}")
             continue
