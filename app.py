@@ -52,7 +52,7 @@ def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
     ]
     response = client.chat_completion(
         messages,
-        max_tokens=200,
+        max_tokens=2048,
         temperature=temperature,
         top_p=0.95,
     )
