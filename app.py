@@ -35,7 +35,7 @@ def local_generate(prompt, temperature):
         top_p=0.95,
     )
 
-    return = outputs[0]["generated_text"][-1]["content"]
+    return outputs[0]["generated_text"][-1]["content"]
 
 def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
     
