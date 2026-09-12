@@ -1,3 +1,4 @@
+import time
 import spaces
 import gradio as gr
 from transformers import pipeline
@@ -20,6 +21,7 @@ def get_pipe():
 
 @spaces.GPU
 def local_generate(prompt, temperature):
+    start  = time.perf_counter()
     messages = [
         {
             "role": "user",
@@ -33,9 +35,14 @@ def local_generate(prompt, temperature):
         temperature=temperature,
         top_p=0.95,
     )
-    return outputs[0]["generated_text"][-1]["content"]
+
+    elapsed = time.perf_counter() - start 
+    result = outputs[0]["generated_text"][-1]["content"]
+    return result, elapsed
 
 def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
+    start = time.perf_counter()
+    
     client = InferenceClient(
         token=hf_token.token,
         model=REMOTE_MODEL,
@@ -49,11 +56,13 @@ def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
     ]
     response = client.chat_completion(
         messages,
-        max_tokens=512,
+        max_tokens=200,
         temperature=temperature,
         top_p=0.95,
     )
-    return response.choices[0].message.content
+    
+    elapsed = time.perf_counter() - start
+    return response.choices[0].message.content, elapsed
 
 def failure_reason(error):
     """Describe failures without exposing API responses or credentials."""
@@ -97,10 +106,10 @@ Lyrics:
 
         try:
             if backend == "local":
-                result = local_generate(prompt, temperature)
+                result, elapsed = local_generate(prompt, temperature)
                 model = LOCAL_MODEL
             else:
-                result = remote_generate(prompt, temperature, hf_token)
+                result, elapsed = remote_generate(prompt, temperature, hf_token)
                 model = REMOTE_MODEL
             if not isinstance(result, str) or not result.strip():
                 raise ValueError("Empty model response")
@@ -109,7 +118,10 @@ Lyrics:
             failures.append(f"{backend.capitalize()} model: {failure_reason(error)}")
             continue
 
-        status = f"Handled by {backend} model: {model}"
+        status = (
+            f"Handled by {backend} model: {model}\n"
+            f"Response time: {elapsed:.2f} seconds"
+        )
         if failures:
             status += "\nAutomatic fallback: " + "; ".join(failures) + "."
         return f"{status}\n\n{result}"
