@@ -29,7 +29,7 @@ def local_generate(prompt, temperature):
     ]
     outputs = get_pipe()(
         messages,
-        max_new_tokens=200,
+        max_new_tokens=512,
         do_sample=True,
         temperature=temperature,
         top_p=0.95,
