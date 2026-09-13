@@ -56,19 +56,8 @@ def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
         temperature=temperature,
         top_p=0.95,
     )
-
-    print("Input tokens:", response.usage.prompt_tokens)
-    print("Output tokens:", response.usage.completion_tokens)
-    print("Total tokens:", response.usage.total_tokens)
     
-    content = response.choices[0].message.content
-
-    return (
-        f"{content}\n\n"
-        f"Input tokens: {response.usage.prompt_tokens}\n"
-        f"Output tokens: {response.usage.completion_tokens}\n"
-        f"Total tokens: {response.usage.total_tokens}"
-)
+    return response.choices[0].message.content
 
 def failure_reason(error):
     """Describe failures without exposing API responses or credentials."""
