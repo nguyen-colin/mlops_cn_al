@@ -35,6 +35,10 @@ Other inference errors also trigger fallback. Without login, remote inference is
 skipped and local inference is attempted. If neither model succeeds, the app
 returns an error explaining each failure without displaying raw exception details.
 
+## Discord Webhook
+
+We added an automated team notification to our GitHub Actions workflow. Whenever the GitHub Action runs, a message is sent to our team through Discord using a webhook. This lets the team know when the workflow has completed without having to manually check GitHub.
+
 
 ## Run
 
