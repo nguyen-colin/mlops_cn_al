@@ -72,7 +72,7 @@ def test_local_failure_falls_back_to_remote(backends):
     assert f"Handled by remote model: {app.REMOTE_MODEL}" in result
     assert "Automatic fallback" in result
     assert result.endswith("Remote prediction")
-    remote.assert_called_once_with(*local.call_args.args, token)
+    remote.assert_called_once_with(*local.call_args.args)
     local.assert_called_once()
 
 # Test that the predict function returns an error message when both models fail.
