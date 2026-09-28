@@ -1,3 +1,4 @@
+import os
 import time
 import spaces
 import gradio as gr
@@ -9,6 +10,10 @@ LOCAL_MODEL = "google/gemma-4-E2B-it"
 REMOTE_MODEL = "openai/gpt-oss-20b"
 REMOTE_TIMEOUT_SECONDS = 30
 
+HF_TOKEN = os.environ.get("HF_TOKEN")
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Using device: {DEVICE}")
+
 # Local model
 @lru_cache(maxsize=1)
 def get_pipe():
@@ -16,7 +21,7 @@ def get_pipe():
         "text-generation",
         model=LOCAL_MODEL,
         dtype="auto",
-        device="cuda",
+        device=DEVICE,
     )
 
 @spaces.GPU
@@ -38,9 +43,10 @@ def local_generate(prompt, temperature):
     return outputs[0]["generated_text"][-1]["content"]
 
 def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
-    
+    if not HF_TOKEN:
+        raise RuntimeError("HF_TOKEN env variable missing")
     client = InferenceClient(
-        token=hf_token.token,
+        token=HF_TOKEN,
         model=REMOTE_MODEL,
         timeout=REMOTE_TIMEOUT_SECONDS,
     )
@@ -95,8 +101,8 @@ Lyrics:
     order = ("local", "remote") if use_local else ("remote", "local")
     failures = []
     for backend in order:
-        if backend == "remote" and not getattr(hf_token, "token", None):
-            failures.append("Remote model unavailable: Hugging Face login required")
+        if backend == "remote" and not HF_TOKEN:
+            failures.append("Remote model unavailable: HF_TOKEN missing")
             continue
 
         try:
@@ -151,7 +157,9 @@ if __name__ == "__main__":
     )
 
     with gr.Blocks() as demo:
-        gr.LoginButton()
         iface.render()
 
-    demo.launch()
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+    )
