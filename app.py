@@ -1,6 +1,6 @@
 import os
 import time
-import spaces
+import torch
 import gradio as gr
 from transformers import pipeline
 from huggingface_hub import InferenceClient
@@ -24,7 +24,6 @@ def get_pipe():
         device=DEVICE,
     )
 
-@spaces.GPU
 def local_generate(prompt, temperature):
     messages = [
         {
@@ -42,7 +41,7 @@ def local_generate(prompt, temperature):
 
     return outputs[0]["generated_text"][-1]["content"]
 
-def remote_generate(prompt, temperature, hf_token: gr.OAuthToken | None):
+def remote_generate(prompt, temperature):
     if not HF_TOKEN:
         raise RuntimeError("HF_TOKEN env variable missing")
     client = InferenceClient(
@@ -79,7 +78,7 @@ def failure_reason(error):
     return "inference failed"
 
 
-def predict(lyrics, temperature, use_local, hf_token: gr.OAuthToken | None):
+def predict(lyrics, temperature, use_local):
     if not lyrics or not lyrics.strip():
         return "Please enter song lyrics."
 
@@ -112,7 +111,7 @@ Lyrics:
                 result = local_generate(prompt, temperature)
                 model = LOCAL_MODEL
             else:
-                result = remote_generate(prompt, temperature, hf_token)
+                result = remote_generate(prompt, temperature)
                 model = REMOTE_MODEL
 
             elapsed = time.perf_counter() - start
