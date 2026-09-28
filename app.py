@@ -1,6 +1,7 @@
 import os
 import time
 import torch
+import spaces
 import gradio as gr
 from transformers import pipeline
 from huggingface_hub import InferenceClient
@@ -23,7 +24,8 @@ def get_pipe():
         dtype="auto",
         device=DEVICE,
     )
-
+    
+@spaces.GPU
 def local_generate(prompt, temperature):
     messages = [
         {
