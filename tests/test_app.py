@@ -14,24 +14,23 @@ def test_predict_uses_local_model(monkeypatch):
 
     monkeypatch.setattr(app, "local_generate", local_model)
     monkeypatch.setattr(app, "remote_generate", remote_model)
-
+    monkeypatch.setattr(app, "HF_TOKEN", "test-token")
+    
     result = app.predict(
         lyrics=lyrics,
         temperature=0.7,
         use_local=True,
-        hf_token=None,
     )
 
     assert result.startswith(
     f"Handled by local model: {app.LOCAL_MODEL}\nResponse time:"
     )
     assert result.endswith(expected)
-
-
     prompt, temperature = local_model.call_args.args
     assert lyrics in prompt
     assert "top 3" in prompt
     assert temperature == 0.7
+    
     remote_model.assert_not_called()
 
 # Helper backend function to simulate failures and test fallback behavior.
@@ -41,7 +40,8 @@ def backends(monkeypatch):
     remote = Mock(return_value="Remote prediction")
     monkeypatch.setattr(app, "local_generate", local)
     monkeypatch.setattr(app, "remote_generate", remote)
-    return local, remote, SimpleNamespace(token="test-token")
+    monkeypatch.setattr(app, "HF_TOKEN", "test-token")
+    return local, remote
 
 # Test that the predict function falls back to the remote model when the local model fails.
 @pytest.mark.parametrize("failure, reason", [
@@ -49,10 +49,10 @@ def backends(monkeypatch):
     (RuntimeError("private details"), "inference failed"),
 ])
 def test_remote_failure_falls_back_to_local(backends, failure, reason):
-    local, remote, token = backends
+    local, remote = backends
     remote.side_effect = failure
 
-    result = app.predict("Sample lyrics", 0.7, False, token)
+    result = app.predict("Sample lyrics", 0.7, False)
 
     assert f"Handled by local model: {app.LOCAL_MODEL}" in result
     assert "Automatic fallback" in result
@@ -64,10 +64,10 @@ def test_remote_failure_falls_back_to_local(backends, failure, reason):
 
 # Test that the predict function falls back to the remote model when the local model fails.
 def test_local_failure_falls_back_to_remote(backends):
-    local, remote, token = backends
+    local, remote = backends
     local.side_effect = RuntimeError("GPU unavailable")
 
-    result = app.predict("Sample lyrics", 0.7, True, token)
+    result = app.predict("Sample lyrics", 0.7, True)
 
     assert f"Handled by remote model: {app.REMOTE_MODEL}" in result
     assert "Automatic fallback" in result
@@ -77,11 +77,11 @@ def test_local_failure_falls_back_to_remote(backends):
 
 # Test that the predict function returns an error message when both models fail.
 def test_both_models_fail_gracefully(backends):
-    local, remote, token = backends
+    local, remote = backends
     local.side_effect = RuntimeError("private local details")
     remote.side_effect = TimeoutError("private remote details")
 
-    result = app.predict("Sample lyrics", 0.7, False, token)
+    result = app.predict("Sample lyrics", 0.7, False)
 
     assert result.startswith("Unable to generate a prediction")
     assert "Remote model: request timed out" in result
