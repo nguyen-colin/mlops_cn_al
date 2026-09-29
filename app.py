@@ -60,7 +60,7 @@ def remote_generate(prompt, temperature):
     ]
     response = client.chat_completion(
         messages,
-        max_tokens=300,
+        max_tokens=800,
         temperature=temperature,
         top_p=0.95,
     )
