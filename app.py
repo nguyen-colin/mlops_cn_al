@@ -35,7 +35,7 @@ def local_generate(prompt, temperature):
     ]
     outputs = get_pipe()(
         messages,
-        max_new_tokens=2048,
+        max_new_tokens=300,
         do_sample=True,
         temperature=temperature,
         top_p=0.95,
@@ -59,7 +59,7 @@ def remote_generate(prompt, temperature):
     ]
     response = client.chat_completion(
         messages,
-        max_tokens=2048,
+        max_tokens=300,
         temperature=temperature,
         top_p=0.95,
     )
