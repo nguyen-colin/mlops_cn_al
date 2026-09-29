@@ -7,7 +7,8 @@ from transformers import pipeline
 from huggingface_hub import InferenceClient
 from functools import lru_cache
 
-LOCAL_MODEL = "google/gemma-4-E2B-it"
+# LOCAL_MODEL = "google/gemma-4-E2B-it"
+LOCAL_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
 REMOTE_MODEL = "openai/gpt-oss-20b"
 REMOTE_TIMEOUT_SECONDS = 30
 
