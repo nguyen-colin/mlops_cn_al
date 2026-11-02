@@ -6,6 +6,13 @@ import gradio as gr
 from transformers import pipeline
 from huggingface_hub import InferenceClient
 from functools import lru_cache
+from prometheus_client import start_http_server, Counter, Summary
+
+# --- Prometheus metrics ---
+REQUEST_COUNTER = Counter('app_requests_total', 'Total number of requests')
+SUCCESSFUL_REQUESTS = Counter('app_successful_requests_total', 'Total number of successful requests')
+FAILED_REQUESTS = Counter('app_failed_requests_total', 'Total number of failed requests')
+REQUEST_DURATION = Summary('app_request_duration_seconds', 'Time spent processing request')
 
 # LOCAL_MODEL = "google/gemma-4-E2B-it"
 LOCAL_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
@@ -108,6 +115,7 @@ Lyrics:
             continue
 
         try:
+            REQUEST_COUNTER.inc()
             start = time.perf_counter()
             
             if backend == "local":
@@ -116,23 +124,26 @@ Lyrics:
             else:
                 result = remote_generate(prompt, temperature)
                 model = REMOTE_MODEL
-
+            SUCCESSFUL_REQUESTS.inc()
             elapsed = time.perf_counter() - start
             
             if not isinstance(result, str) or not result.strip():
+                FAILED_REQUESTS.inc()
                 raise ValueError("Empty model response")
         except Exception as error:
             print(f"{backend} error:", repr(error))
+            FAILED_REQUESTS.inc()
             # catch only around inference, and attempt each backend at most once.
             failures.append(f"{backend.capitalize()} model: {failure_reason(error)}")
             continue
-
+        SUCCESSFUL_REQUESTS.inc()
         status = (
             f"Handled by {backend} model: {model}\n"
             f"Response time: {elapsed:.2f} seconds"
         )
         if failures:
             status += "\nAutomatic fallback: " + "; ".join(failures) + "."
+        REQUEST_DURATION.observe(time.perf_counter() - start)
         return f"{status}\n\n{result}"
 
     return "Unable to generate a prediction. " + "; ".join(failures) + ". Please try again."
@@ -160,7 +171,8 @@ if __name__ == "__main__":
 
     with gr.Blocks() as demo:
         iface.render()
-
+        
+    start_http_server(8000)
     demo.launch(
         server_name="0.0.0.0",
         server_port=7860,
