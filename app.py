@@ -87,9 +87,13 @@ def failure_reason(error):
         return "service unavailable"
     return "inference failed"
 
-
 def predict(lyrics, temperature, use_local):
+    REQUEST_COUNTER.inc()
+    request_start = time.perf_counter()
+
     if not lyrics or not lyrics.strip():
+        FAILED_REQUESTS.inc()
+        REQUEST_DURATION.observe(time.perf_counter() - request_start)
         return "Please enter song lyrics."
 
     prompt = f"""
@@ -98,55 +102,62 @@ Analyze the following song lyrics.
 Predict the top 3 most likely musical genres.
 
 For each genre:
-- Give the genre
-- Give an estimated confidence percentage
-- Give a short explanation
+Give the genre
+Give an estimated confidence percentage
+Give a short explanation
 
 Lyrics:
 {lyrics}
 """
 
-    # Each request tries the preferred model first, allowing automatic recovery.
     order = ("local", "remote") if use_local else ("remote", "local")
     failures = []
-    for backend in order:
-        if backend == "remote" and not HF_TOKEN:
-            failures.append("Remote model unavailable: HF_TOKEN missing")
-            continue
+    try:
+        for backend in order:
+            if backend == "remote" and not HF_TOKEN:
+                failures.append("Remote model unavailable: HF_TOKEN missing")
+                continue
+            try:
+                start = time.perf_counter()
 
-        try:
-            REQUEST_COUNTER.inc()
-            start = time.perf_counter()
-            
-            if backend == "local":
-                result = local_generate(prompt, temperature)
-                model = LOCAL_MODEL
-            else:
-                result = remote_generate(prompt, temperature)
-                model = REMOTE_MODEL
-            SUCCESSFUL_REQUESTS.inc()
-            elapsed = time.perf_counter() - start
-            
-            if not isinstance(result, str) or not result.strip():
-                FAILED_REQUESTS.inc()
-                raise ValueError("Empty model response")
-        except Exception as error:
-            print(f"{backend} error:", repr(error))
-            FAILED_REQUESTS.inc()
-            # catch only around inference, and attempt each backend at most once.
-            failures.append(f"{backend.capitalize()} model: {failure_reason(error)}")
-            continue
-        SUCCESSFUL_REQUESTS.inc()
-        status = (
-            f"Handled by {backend} model: {model}\n"
-            f"Response time: {elapsed:.2f} seconds"
+                if backend == "local":
+                    result = local_generate(prompt, temperature)
+                    model = LOCAL_MODEL
+                else:
+                    result = remote_generate(prompt, temperature)
+                    model = REMOTE_MODEL
+
+                if not isinstance(result, str) or not result.strip():
+                    raise ValueError("Empty model response")
+
+                SUCCESSFUL_REQUESTS.inc()
+                elapsed = time.perf_counter() - start
+                status = (
+                    f"Handled by {backend} model: {model}\n"
+                    f"Response time: {elapsed:.2f} seconds"
+                )
+
+                if failures:
+                    status += (
+                        "\nAutomatic fallback: "
+                        + "; ".join(failures) + "."
+                    )
+
+                return f"{status}\n\n{result}"
+            except Exception as error:
+                            print(f"{backend} error: {failure_reason(error)}")
+                            failures.append(
+                                f"{backend.capitalize()} model: {failure_reason(error)}"
+                            )
+        FAILED_REQUESTS.inc()
+        return (
+            "Unable to generate a prediction. "
+            + "; ".join(failures)
+            + ". Please try again."
         )
-        if failures:
-            status += "\nAutomatic fallback: " + "; ".join(failures) + "."
-        REQUEST_DURATION.observe(time.perf_counter() - start)
-        return f"{status}\n\n{result}"
+    finally:
+        REQUEST_DURATION.observe(time.perf_counter() - request_start)
 
-    return "Unable to generate a prediction. " + "; ".join(failures) + ". Please try again."
 
 
 if __name__ == "__main__":
