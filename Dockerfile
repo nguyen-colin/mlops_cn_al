@@ -16,6 +16,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 EXPOSE 7860
+EXPOSE 8000
 EXPOSE 9100
 
 ENV GRADIO_SERVER_NAME="0.0.0.0"
