@@ -129,8 +129,7 @@ Lyrics:
 
                 if not isinstance(result, str) or not result.strip():
                     raise ValueError("Empty model response")
-
-                SUCCESSFUL_REQUESTS.inc()
+                    
                 elapsed = time.perf_counter() - start
                 status = (
                     f"Handled by {backend} model: {model}\n"
@@ -142,13 +141,13 @@ Lyrics:
                         "\nAutomatic fallback: "
                         + "; ".join(failures) + "."
                     )
-
+                SUCCESSFUL_REQUESTS.inc()
                 return f"{status}\n\n{result}"
             except Exception as error:
-                            print(f"{backend} error: {failure_reason(error)}")
-                            failures.append(
-                                f"{backend.capitalize()} model: {failure_reason(error)}"
-                            )
+                print(f"{backend} error: {failure_reason(error)}")
+                failures.append(
+                    f"{backend.capitalize()} model: {failure_reason(error)}"
+                )
         FAILED_REQUESTS.inc()
         return (
             "Unable to generate a prediction. "
