@@ -5,3 +5,4 @@ accelerate
 gradio[oauth]
 spaces
 huggingface_hub
+prometheus-client
