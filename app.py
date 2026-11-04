@@ -110,7 +110,8 @@ Lyrics:
 {lyrics}
 """
 
-    order = ("local", "remote") if use_local else ("remote", "local")
+    # order = ("local", "remote") if use_local else ("remote", "local")
+    order = ("remote",)
     failures = []
     try:
         for backend in order:
@@ -144,10 +145,25 @@ Lyrics:
                 SUCCESSFUL_REQUESTS.inc()
                 return f"{status}\n\n{result}"
             except Exception as error:
-                print(f"{backend} error: {failure_reason(error)}")
+                # print(f"{backend} error: {failure_reason(error)}")
+                # failures.append(
+                #     f"{backend.capitalize()} model: {failure_reason(error)}"
+                # )
+                import traceback
+            
+                print(f"\n--- {backend.upper()} MODEL ERROR ---", flush=True)
+                print(f"Error type: {type(error).__name__}", flush=True)
+            
+                response = getattr(error, "response", None)
+                status = getattr(response, "status_code", None)
+            
+                print(f"HTTP status: {status}", flush=True)
+                traceback.print_exception(type(error), error, error.__traceback__)
+            
                 failures.append(
                     f"{backend.capitalize()} model: {failure_reason(error)}"
                 )
+
         FAILED_REQUESTS.inc()
         return (
             "Unable to generate a prediction. "
