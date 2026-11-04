@@ -87,7 +87,7 @@ def failure_reason(error):
         return "service unavailable"
     return "inference failed"
 
-def predict(lyrics, temperature, use_local):
+def predict(lyrics, temperature, use_local, hf_token):
     REQUEST_COUNTER.inc()
     request_start = time.perf_counter()
 
@@ -171,10 +171,10 @@ if __name__ == "__main__":
         outputs=gr.Text(label="Genre prediction"),
         title="Song Lyrics Genre Classifier",
         examples=[
-            ["I walk this empty street on the boulevard of broken dreams\nWhere the city sleeps and I'm the only one and I walk alone\nMy shadow's the only one that walks beside me\nMy shallow heart's the only thing that's beating", 0.7, False],
-            ["You are my fire, the one desire\nBelieve when I say, I want it that way\nBut we are two worlds apart\nCan't reach to your heart when you say\nThat I want it that way", 1.0, False],
-            ["I got my mind on my money and my money on my mind\nRolling down the street smoking indo, sipping on gin and juice\nLaid back with my mind on my money and my money on my mind", 0.7, True],
-            ["Achy breaky heart, don't tell my heart\nMy achy breaky heart, I just don't think he'd understand\nAnd if you tell my heart, my achy breaky heart\nHe might blow up and kill this man", 1.0, True],
+            ["I walk this empty street on the boulevard of broken dreams\nWhere the city sleeps and I'm the only one and I walk alone\nMy shadow's the only one that walks beside me\nMy shallow heart's the only thing that's beating", 0.7, False, ""],
+            ["You are my fire, the one desire\nBelieve when I say, I want it that way\nBut we are two worlds apart\nCan't reach to your heart when you say\nThat I want it that way", 1.0, False, ""],
+            ["I got my mind on my money and my money on my mind\nRolling down the street smoking indo, sipping on gin and juice\nLaid back with my mind on my money and my money on my mind", 0.7, True, ""],
+            ["Achy breaky heart, don't tell my heart\nMy achy breaky heart, I just don't think he'd understand\nAnd if you tell my heart, my achy breaky heart\nHe might blow up and kill this man", 1.0, True, ""],
         ],
         cache_examples=False,
         flagging_mode="never",
