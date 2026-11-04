@@ -19,7 +19,6 @@ LOCAL_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
 REMOTE_MODEL = "openai/gpt-oss-20b"
 REMOTE_TIMEOUT_SECONDS = 30
 
-HF_TOKEN = os.environ.get("HF_TOKEN")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
 
@@ -51,11 +50,12 @@ def local_generate(prompt, temperature):
 
     return outputs[0]["generated_text"][-1]["content"]
 
-def remote_generate(prompt, temperature):
-    if not HF_TOKEN:
-        raise RuntimeError("HF_TOKEN env variable missing")
+def remote_generate(prompt, temperature, hf_token):
+    if not hf_token or not hf_token.strip():
+        raise RuntimeError("Hugging Face token missing")
+        
     client = InferenceClient(
-        token=HF_TOKEN,
+        token=hf_token.strip(),
         model=REMOTE_MODEL,
         timeout=REMOTE_TIMEOUT_SECONDS,
     )
@@ -114,8 +114,8 @@ Lyrics:
     failures = []
     try:
         for backend in order:
-            if backend == "remote" and not HF_TOKEN:
-                failures.append("Remote model unavailable: HF_TOKEN missing")
+            if backend == "remote" and not (hf_token and hf_token.strip()):
+                failures.append("Remote model unavailable: Hugging Face token missing")
                 continue
             try:
                 start = time.perf_counter()
@@ -124,7 +124,7 @@ Lyrics:
                     result = local_generate(prompt, temperature)
                     model = LOCAL_MODEL
                 else:
-                    result = remote_generate(prompt, temperature)
+                    result = remote_generate(prompt, temperature, hf_token)
                     model = REMOTE_MODEL
 
                 if not isinstance(result, str) or not result.strip():
@@ -166,6 +166,7 @@ if __name__ == "__main__":
             gr.Textbox(lines=10, label="Song lyrics", placeholder="Paste song lyrics here..."),
             gr.Slider(minimum=0.1, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
             gr.Checkbox(label="Prefer local model (automatic fallback enabled)", value=False),
+            gr.Textbox(label="Hugging Face Token", placeholder="hf_...", type="password"),
         ],
         outputs=gr.Text(label="Genre prediction"),
         title="Song Lyrics Genre Classifier",
