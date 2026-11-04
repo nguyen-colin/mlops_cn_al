@@ -110,8 +110,8 @@ Lyrics:
 {lyrics}
 """
 
-    # order = ("local", "remote") if use_local else ("remote", "local")
-    order = ("remote",)
+    order = ("local", "remote") if use_local else ("remote", "local")
+    # order = ("remote",)
     failures = []
     try:
         for backend in order:
